@@ -3,6 +3,7 @@
  */
 
 #include "csapp.h"
+#include <dirent.h>
 
 #define MAX_NAME_LEN 256
 #define NB_CLIENTS 2
@@ -12,6 +13,9 @@ void sendFile(int connfd);
  * Note that this code only works with IPv4 addresses
  * (IPv6 is not supported)
  */
+
+int ls();
+
 int main(int argc, char **argv)
 {
     int listenfd, connfd, port;
@@ -20,6 +24,7 @@ int main(int argc, char **argv)
     char client_ip_string[INET_ADDRSTRLEN];
     char client_hostname[MAX_NAME_LEN];
     pid_t pidPapa = getpid();
+    //DIR* dir;
 
     if (argc != 2) {
         fprintf(stderr, "usage: %s <port>\n", argv[0]);
@@ -57,4 +62,34 @@ int main(int argc, char **argv)
         }
     }
     exit(0);
+}
+
+int ls()
+{
+	currentdir = opendir(".");
+
+	while (currentdir)
+	{
+	    errno = 0;
+	    if ((rd = readdir(currentdir)) != NULL)
+	    {
+	        if (strcmp(rd->d_name, name) == 0)
+		{
+	            closedir(currentdir);
+	        }
+	    }
+	    else
+	    {
+	        if (errno == 0) 
+		{
+	            closedir(dirp);
+		    printf("Error : File not found !");
+	            return 1;
+	        }
+	        closedir(dirp);
+		printf("Read error");
+		return 2;
+   	     }
+	}
+	return 0;
 }
