@@ -10,9 +10,8 @@ int main(int argc, char **argv)
     char *host, bufName[MAXLINE],bufFile[MAXLINE];
     rio_t rio;
     int fdin;
-    ssize_t sizeFile = 0;
-    struct timeval stop, start;
-    double resTemps;
+    ssize_t sizeFileSend = 0;
+    size_t sizeRead;
 
     if (argc != 3) {
         fprintf(stderr, "usage: %s <host> <port>\n", argv[0]);
@@ -32,28 +31,31 @@ int main(int argc, char **argv)
      * and the server OS ... but it is possible that the server application
      * has not yet called "Accept" for this connection
      */
-    printf("client connected to server OS\n");
+    printf("Connecté à mon Serveur FTP\n");
     printf("Rentrer un nom de fichier :\n");
     Rio_readinitb(&rio, clientfd);
+
+   time_t start_t, end_t;
+   double diff_t;
 
     while (Fgets(bufName, MAXLINE, stdin) != NULL) {
 
         Rio_writen(clientfd, bufName, strlen(bufName));
-        if((fdin = open("Fichier_recu.jpg",O_WRONLY | O_CREAT,644))>0){
-            gettimeofday(&start, NULL);
-            while (Rio_readlineb(&rio, bufFile, MAXLINE) != 0) {
-                Fputs(bufFile, stdout);
-                sizeFile += rio_writen(fdin, bufFile, strlen(bufFile));
-            }
-            close(fdin);
-            gettimeofday(&stop, NULL);
-            printf("Le fichier a été envoyé avec succes\n");
-            if(stop.tv_usec => start.tv_usec){
-                resTemps = stop.tv_usec - start.tv_usec;
-            }else{
+        time(&start_t);
 
+        if((fdin = open("Fichier_recu.jpg",O_WRONLY | O_CREAT,0644))>0){
+
+            while ((sizeRead = Rio_readnb(&rio, bufFile, MAXLINE)) != 0) {
+                Fputs(bufFile, stdout);
+                sizeFileSend += rio_writen(fdin, bufFile,sizeRead);
             }
-            printf(" %lu bytes reçus en %li ms\n",sizeFile,(stop.tv_usec - start.tv_usec)/1000000);
+
+            close(fdin);
+            printf("Le fichier a été envoyé avec succes\n");
+            time(&end_t);
+            diff_t = difftime(end_t, start_t);
+
+            printf(" %lu bytes reçus en %f ms\n",sizeFileSend,diff_t);
         }else{
             printf("Problème ouverture fichier");
         }

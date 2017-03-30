@@ -3,6 +3,7 @@
  */
 #include "csapp.h"
 
+
 void echo(int connfd)
 {
     size_t n;
@@ -19,11 +20,11 @@ void echo(int connfd)
 
 void sendFile(int connfd)
 {
-    size_t n;
     char * bufName = malloc(MAXLINE);
     char * bufFile = malloc(MAXLINE);
     rio_t rios, riof;
     int fdin;
+    size_t sizeRead,n;
 
     Rio_readinitb(&rios, connfd);
     n = Rio_readlineb(&rios, bufName, MAXLINE);
@@ -37,8 +38,8 @@ void sendFile(int connfd)
     if((fdin = open(file, O_RDONLY, 0))>0){
 
             Rio_readinitb(&riof, fdin);
-            while ((n = Rio_readlineb(&riof, bufFile, MAXLINE)) != 0) {
-                Rio_writen(connfd, bufFile, n);
+            while ((sizeRead = Rio_readnb(&riof, bufFile, MAXBLOCK)) != 0) {
+                Rio_writen(connfd, bufFile, sizeRead);
             }
             //char * buf="Le fichier a été reçu entièrement";
             //Rio_writen(connfd, buf, strlen(buf));
