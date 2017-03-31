@@ -9,6 +9,10 @@
 void echo(int connfd);
 void sendFile(int connfd);
 
+typedef struct {
+     unsigned int s_addr; 
+     size_t octetsSend;
+} infosClient;
 
 /*
  * Note that this code only works with IPv4 addresses

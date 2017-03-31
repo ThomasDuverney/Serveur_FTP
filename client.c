@@ -48,6 +48,7 @@ int main(int argc, char **argv)
                 time(&start_t);
                 while ((sizeRead = Rio_readnb(&rio, bufFile, MAXBLOCK)) != 0 && countFileSize !=sizeFileSend) {
                     countFileSize += rio_writen(fdin, bufFile,sizeRead);
+                    sleep(4);
                 }
                 time(&end_t);
                 close(fdin);

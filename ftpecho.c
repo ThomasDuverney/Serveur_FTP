@@ -51,7 +51,9 @@ void sendFile(int connfd)
 
             Rio_readinitb(&riof, fdin);
             while ((sizeRead = Rio_readnb(&riof, bufFile, MAXBLOCK)) != 0) {
-                Rio_writen(connfd, bufFile, sizeRead);
+                if(rio_writen(connfd, bufFile, sizeRead) != sizeRead){
+                    printf("pouet");
+                }
             }
 
             close(fdin);
