@@ -24,7 +24,6 @@ int main(int argc, char **argv)
     char client_ip_string[INET_ADDRSTRLEN];
     char client_hostname[MAX_NAME_LEN];
     pid_t pidPapa = getpid();
-    //DIR* dir;
 
     if (argc != 2) {
         fprintf(stderr, "usage: %s <port>\n", argv[0]);
@@ -45,7 +44,6 @@ int main(int argc, char **argv)
         if(getpid()!= pidPapa){
 
             while((connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen))<0);
-            //Close(listenfd);
             /* determine the name of the client */
             Getnameinfo((SA *) &clientaddr, clientlen,
                         client_hostname, MAX_NAME_LEN, 0, 0, 0);
@@ -56,7 +54,7 @@ int main(int argc, char **argv)
 
             printf("server connected to %s (%s)\n", client_hostname,
                    client_ip_string);
-
+			ls();
             sendFile(connfd);
             Close(connfd);
         }
@@ -66,30 +64,33 @@ int main(int argc, char **argv)
 
 int ls()
 {
-	currentdir = opendir(".");
-
-	while (currentdir)
+	DIR* currentdir = opendir(".");
+	struct dirent *dir_st;
+	int nbfile = 0;
+	
+	while ((dir_st = readdir(currentdir)))
 	{
-	    errno = 0;
-	    if ((rd = readdir(currentdir)) != NULL)
-	    {
-	        if (strcmp(rd->d_name, name) == 0)
-		{
-	            closedir(currentdir);
-	        }
-	    }
-	    else
+	    printf ("%s\n", dir_st->d_name);
+	    nbfile += 1;
+   
+	}
+	printf("%i files found.\n", nbfile); 
+/*	else
 	    {
 	        if (errno == 0) 
-		{
-	            closedir(dirp);
-		    printf("Error : File not found !");
+			{
+	            closedir(currentdir);
+		    	printf("Error : File not found !");
 	            return 1;
 	        }
-	        closedir(dirp);
-		printf("Read error");
-		return 2;
-   	     }
-	}
+			while ((dir_st = readdir(currentdir)) != NULL) 
+			{
+		        printf ("[%s]\n", dir_st->d_name);
+		    }
+
+	        closedir(currentdir);
+			printf("Read error");
+			return 2;*/
+	closedir(currentdir);
 	return 0;
 }
