@@ -41,28 +41,29 @@ int main(int argc, char **argv)
     while (Fgets(bufName, MAXLINE, stdin) != NULL) {
 
         Rio_writen(clientfd, bufName, strlen(bufName));
-        if((sizeRead = Rio_readnb(&rio, &sizeFileSend, sizeof(sizeFileSend))) != 0)
-            printf("La taille du fichier est %lu",sizeFileSend);
-        time(&start_t);
 
-        if((fdin = open("Fichier_recu.jpg",O_WRONLY | O_CREAT | O_TRUNC,0644))>0){
+        if((sizeRead = Rio_readnb(&rio, &sizeFileSend,sizeof(sizeFileSend)) != 0)  && sizeFileSend !=0){
 
-            while ((sizeRead = Rio_readnb(&rio, bufFile, MAXBLOCK)) != 0 && countFileSize !=sizeFileSend) {
-                //Fputs(bufFile, stdout);
-                //printf("%lu",sizeFileSend);
-                countFileSize += rio_writen(fdin, bufFile,sizeRead);
+            if((fdin = open("Fichier_recu.jpg",O_WRONLY | O_CREAT | O_TRUNC,0644))>0){
+                time(&start_t);
+                while ((sizeRead = Rio_readnb(&rio, bufFile, MAXBLOCK)) != 0 && countFileSize !=sizeFileSend) {
+                    countFileSize += rio_writen(fdin, bufFile,sizeRead);
+                }
+                time(&end_t);
+                close(fdin);
+
+                diff_t = difftime(end_t, start_t);
+
+                printf("Le fichier a été envoyé avec succes\n");
+                printf("%lu bytes reçus en %f ms\n",countFileSize,diff_t);
+                exit(0);
+            }else{
+                printf("Problème ouverture fichier\n");
             }
-            printf("La taille du fichier est %lu \n",sizeFileSend);
-            close(fdin);
-            printf("Le fichier a été envoyé avec succes\n");
-            time(&end_t);
-            diff_t = difftime(end_t, start_t);
-
-            printf(" %lu bytes reçus en %f ms\n",countFileSize,diff_t);
         }else{
-            printf("Problème ouverture fichier");
+            printf("Le fichier demandé n'existe pas sur le serveur\n");
+            exit(0);
         }
-        printf("Rentrer un nom de fichier :\n");
     }
     Close(clientfd);
     exit(0);

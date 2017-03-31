@@ -27,7 +27,7 @@ void sendFile(int connfd)
     rio_t rios, riof;
     int fdin;
     struct stat st;
-    size_t sizeRead,n;
+    size_t sizeRead,size,n;
 /*-----------------------------------------*/
 /*-----------------------------------------*/
     /* */
@@ -45,20 +45,19 @@ void sendFile(int connfd)
     if((fdin = open(file, O_RDONLY, 0))>0){
             /*Recupere la taille du fichier */
             stat(file, &st);
-            size_t size = st.st_size;
-            printf("Le fichier a envoyer à une taille de %lu\n",size );
+            size = st.st_size;
+            printf("Le fichier a envoyer à une taille de %lu\n",size);
             Rio_writen(connfd,&size, sizeof(size));
 
             Rio_readinitb(&riof, fdin);
             while ((sizeRead = Rio_readnb(&riof, bufFile, MAXBLOCK)) != 0) {
                 Rio_writen(connfd, bufFile, sizeRead);
             }
-            //char * buf="Le fichier a été reçu entièrement";
-            //Rio_writen(connfd, buf, strlen(buf));
+
             close(fdin);
     }else{
-        char * buf="Le fichier demandé n'existe pas";
-        Rio_writen(connfd, buf, strlen(buf));
+            size = 0;
+            Rio_writen(connfd,&size, sizeof(size));
     }
     free(bufName);
     free(bufFile);
