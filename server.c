@@ -9,10 +9,11 @@
 #define NB_CLIENTS 2
 void echo(int connfd);
 void sendFile(int connfd);
-/*
- * Note that this code only works with IPv4 addresses
- * (IPv6 is not supported)
- */
+
+typedef struct {
+     unsigned int s_addr; 
+     size_t octetsSend;
+} infosClient;
 
 int ls();
 
