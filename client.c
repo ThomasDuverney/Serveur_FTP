@@ -7,7 +7,7 @@
 int main(int argc, char **argv)
 {
     int clientfd, port;
-    char *host, bufName[MAXLINE],bufFile[MAXLINE];
+    char *host, bufName[MAXLINE],bufFile[MAXBLOCK];
     rio_t rio;
     int fdin;
     ssize_t countFileSize = 0;
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
                 //printf("%lu",sizeFileSend);
                 countFileSize += rio_writen(fdin, bufFile,sizeRead);
             }
-                printf("La taille du fichier est %lu",sizeFileSend);
+            printf("La taille du fichier est %lu \n",sizeFileSend);
             close(fdin);
             printf("Le fichier a été envoyé avec succes\n");
             time(&end_t);
