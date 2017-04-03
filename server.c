@@ -11,7 +11,7 @@ void echo(int connfd);
 void sendFile(int connfd);
 
 typedef struct {
-     unsigned int s_addr; 
+     unsigned int s_addr;
      size_t octetsSend;
 } infosClient;
 
@@ -68,30 +68,31 @@ int ls()
 	DIR* currentdir = opendir(".");
 	struct dirent *dir_st;
 	int nbfile = 0;
-	
+
 	while ((dir_st = readdir(currentdir)))
 	{
 	    printf ("%s\n", dir_st->d_name);
 	    nbfile += 1;
-   
+
 	}
-	printf("%i files found.\n", nbfile); 
+	printf("%i files found.\n", nbfile);
 /*	else
 	    {
-	        if (errno == 0) 
+	        if (errno == 0)
 			{
 	            closedir(currentdir);
 		    	printf("Error : File not found !");
 	            return 1;
 	        }
-			while ((dir_st = readdir(currentdir)) != NULL) 
+			while ((dir_st = readdir(currentdir)) != NULL)
 			{
 		        printf ("[%s]\n", dir_st->d_name);
 		    }
 
 	        closedir(currentdir);
 			printf("Read error");
-			return 2;*/
+			return 2;
+      */
 	closedir(currentdir);
 	return 0;
 }
