@@ -3,6 +3,7 @@
  */
 #include "csapp.h"
 #include <sys/stat.h>
+#include <unistd.h>
 
 void echo(int connfd)
 {
@@ -26,6 +27,7 @@ void sendFile(int connfd)
     char * bufFile = malloc(MAXLINE);
     rio_t rios, riof;
     int fdin;
+    fd_set exceptfds;
     struct stat st;
     size_t sizeRead,size,n;
 /*-----------------------------------------*/
@@ -42,7 +44,7 @@ void sendFile(int connfd)
     strncpy(file,bufName,n-1);
 /*-------------------------------------------------*/
 
-    if((fdin = open(file, O_RDONLY, 0))>0){
+    if((fdin = open(file, O_RDONLY, NULL))>0){
             /*Recupere la taille du fichier */
             stat(file, &st);
             size = st.st_size;
@@ -50,14 +52,14 @@ void sendFile(int connfd)
             Rio_writen(connfd,&size, sizeof(size));
 
             Rio_readinitb(&riof, fdin);
+            FD_ZERO(&exceptfds);
             while ((sizeRead = Rio_readnb(&riof, bufFile, MAXBLOCK)) != 0) {
-                if(FD_ISSET(1connfd)==0){
+                select(2,&exceptfds,NULL,NULL,NULL);
+                if(FD_ISSET(connfd,&exceptfds)==0){
                   rio_writen(connfd, bufFile, sizeRead);
                 }else{
                   printf("pouet");
                 }
-
-
             }
 
             close(fdin);

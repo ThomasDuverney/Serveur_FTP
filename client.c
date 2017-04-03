@@ -62,6 +62,7 @@ int main(int argc, char **argv)
                 printf("Problème ouverture fichier\n");
             }
         }else{
+            printf("%lu\n",sizeFileSend);
             printf("Le fichier demandé n'existe pas sur le serveur\n");
             exit(0);
         }
