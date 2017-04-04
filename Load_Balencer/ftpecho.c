@@ -5,6 +5,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+typedef struct {
+     unsigned int s_addr;
+     size_t octetsSend;
+} infosClient;
+
 void echo(int connfd)
 {
     size_t n;
@@ -26,8 +31,7 @@ void sendFile(int connfd)
     char * bufName = malloc(MAXLINE);
     char * bufFile = malloc(MAXLINE);
     rio_t rios, riof;
-    int fdin;
-    fd_set exceptfds;
+    int fdin,clientAlive;
     struct stat st;
     size_t sizeRead,size,n;
 /*-----------------------------------------*/
@@ -52,14 +56,15 @@ void sendFile(int connfd)
             Rio_writen(connfd,&size, sizeof(size));
 
             Rio_readinitb(&riof, fdin);
-            FD_ZERO(&exceptfds);
-            while ((sizeRead = Rio_readnb(&riof, bufFile, MAXBLOCK)) != 0) {
-                select(2,&exceptfds,NULL,NULL,NULL);
-                if(FD_ISSET(connfd,&exceptfds)==0){
-                  rio_writen(connfd, bufFile, sizeRead);
-                }else{
-                  printf("pouet");
+
+            clientAlive = 1;
+
+            while ((sizeRead = Rio_readnb(&riof, bufFile, MAXBLOCK)) != 0 && clientAlive !=0) {
+                if(rio_writen(connfd, bufFile, sizeRead) == -1){
+                    printf("La connexion a un client a été perdu");
+                    clientAlive = 0;
                 }
+                sleep(0.5);
             }
 
             close(fdin);

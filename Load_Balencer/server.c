@@ -10,11 +10,6 @@
 void echo(int connfd);
 void sendFile(int connfd);
 
-typedef struct {
-     unsigned int s_addr;
-     size_t octetsSend;
-} infosClient;
-
 int ls();
 
 int main(int argc, char **argv)
