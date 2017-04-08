@@ -5,10 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-typedef struct {
-     unsigned int s_addr;
-     size_t octetsSend;
-} infosClient;
+#define MAX_NAME_LEN 256
 
 void echo(int connfd)
 {

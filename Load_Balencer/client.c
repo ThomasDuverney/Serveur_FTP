@@ -3,44 +3,46 @@
  */
 #include "csapp.h"
 #include <sys/time.h>
+#define MAX_NAME_LEN 256
 
 int main(int argc, char **argv)
 {
-    int clientfd, port;
+    int listenfd, masterfd,serverfd;
+    int port_master=4000;
+    int port_server = 4001;
+    socklen_t serverlen;
+    struct sockaddr_in serveraddr;
+    char server_ip_string[INET_ADDRSTRLEN];
+    char server_hostname[MAX_NAME_LEN];
+
     char *host, bufName[MAXLINE],bufFile[MAXBLOCK];
     rio_t rio;
     int fdin;
     ssize_t countFileSize = 0;
     size_t sizeRead,sizeFileSend;
 
-    if (argc != 3) {
+    time_t start_t, end_t;
+    double diff_t;
+
+    if (argc != 2) {
         fprintf(stderr, "usage: %s <host> <port>\n", argv[0]);
         exit(0);
     }
     host = argv[1];
-    port = atoi(argv[2]);
-    /*
-     * Note that the 'host' can be a name or an IP address.
-     * If necessary, Open_clientfd will perform the name resolution
-     * to obtain the IP address.
-     */
-    clientfd = Open_clientfd(host, port);
+    masterfd = Open_clientfd(host, port_master);
 
-    /*
-     * At this stage, the connection is established between the client
-     * and the server OS ... but it is possible that the server application
-     * has not yet called "Accept" for this connection
-     */
+    // CREATION SOCKET ECOUTE ET ATTENTE DU SERVER SLAVE
+    serverlen = (socklen_t)sizeof(serveraddr);
+    listenfd = Open_listenfd(port_server);
+    while((serverfd = Accept(listenfd, (SA *)&serveraddr, &serverlen))<0);
+
     printf("Connecté à mon Serveur FTP\n");
-    printf("Rentrer un nom de fichier :\n");
-    Rio_readinitb(&rio, clientfd);
-
-   time_t start_t, end_t;
-   double diff_t;
+    printf("ftp > get : ");
+    Rio_readinitb(&rio, serverfd);
 
     while (Fgets(bufName, MAXLINE, stdin) != NULL) {
 
-        Rio_writen(clientfd, bufName, strlen(bufName));
+        Rio_writen(serverfd, bufName, strlen(bufName));
 
         if((sizeRead = Rio_readnb(&rio, &sizeFileSend,sizeof(sizeFileSend)) != 0)  && sizeFileSend !=0){
 
@@ -65,7 +67,8 @@ int main(int argc, char **argv)
             printf("Le fichier demandé n'existe pas sur le serveur\n");
             exit(0);
         }
+        printf("ftp > get : ");
     }
-    Close(clientfd);
+    Close(serverfd);
     exit(0);
 }
