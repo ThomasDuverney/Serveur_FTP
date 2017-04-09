@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 {
     int listenfd, masterfd,serverfd;
     int port_master=4000;
-    int port_server = 4001;
+    int port_server = 5001;
     socklen_t serverlen;
     struct sockaddr_in serveraddr;
     char server_ip_string[INET_ADDRSTRLEN];
@@ -20,9 +20,7 @@ int main(int argc, char **argv)
     fd_set readset;
     ssize_t countFileSize = 0;
     ssize_t sizeRead,sizeFileSend;
-  //  fd_set readset;
-    struct timeval timeout;
-    timeout.tv_sec =2;
+
     time_t start_t, end_t;
     double diff_t;
 
@@ -32,16 +30,19 @@ int main(int argc, char **argv)
     }
     host = argv[1];
     masterfd = Open_clientfd(host, port_master);
-    //close(masterfd);
+    close(masterfd);
     // CREATION SOCKET ECOUTE ET ATTENTE DU SERVER SLAVE
     serverlen = (socklen_t)sizeof(serveraddr);
     listenfd = Open_listenfd(port_server);
     while((serverfd = Accept(listenfd, (SA *)&serveraddr, &serverlen))<0);
 
+    // RECPERATION DES INFORMATIONS SUR LE SERVEUR
     Getnameinfo((SA *) &serveraddr, serverlen,server_hostname, MAX_NAME_LEN, 0, 0, 0);
     Inet_ntop(AF_INET, &serveraddr.sin_addr, server_ip_string,INET_ADDRSTRLEN);
+
+    //ENVOI D'UN OCTET POUR CONFIRMER LA CONNEXION
     int connected = 1;
-    Rio_writen(serverfd,&connected, sizeof(connected));
+    write(serverfd,&connected, sizeof(connected));
 
     printf("Connecté à mon Serveur FTP\n");
     printf("ftp > get : ");
@@ -58,7 +59,7 @@ int main(int argc, char **argv)
             printf("%lu\n",sizeFileSend);
             printf("%lu\n",sizeRead);
             if(sizeRead!= 0 && sizeFileSend !=-1){
-              if((fdin = open("Fichier_recu.jpg",O_WRONLY | O_CREAT | O_TRUNC,0777))>0){
+              if((fdin = open("Fichier_recu.jpg",O_WRONLY | O_CREAT | O_TRUNC,0644))>0){
                   time(&start_t);
 
                   while ((sizeRead = read(serverfd, bufFile, MAXBLOCK)) <= 0 && countFileSize !=sizeFileSend) {

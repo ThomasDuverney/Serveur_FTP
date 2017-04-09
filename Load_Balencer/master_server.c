@@ -2,10 +2,10 @@
 #include <dirent.h>
 
 #define MAX_NAME_LEN 256
-#define NB_SERVERS 1
+#define NB_SERVERS 2
 #define NB_CLIENTS 5
 #define OCCUPE 1
-#define LIBRE 1
+#define LIBRE 0
 
 int main(int argc, char **argv)
 {
@@ -41,6 +41,7 @@ int main(int argc, char **argv)
     listenfd = Open_listenfd(port);
 
 // BOUCLE POUR ATTENDRE TOUS LES SLAVES
+    printf("En attente des slaves...\n");
     int i =0;
     while(i <NB_SERVERS){
 
@@ -55,7 +56,7 @@ int main(int argc, char **argv)
           i++;
     }
     printf("Les servers slaves sont prêts \n");
-    printf("En attentes de clients... \n");
+    printf("En attente de clients... \n");
 // BOUCLE POUR ATTENDRE TOUS LES CLIENTS
     while (1) {
 

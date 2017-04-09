@@ -18,7 +18,7 @@ void sendFile(int connfd);
 int main(int argc, char **argv)
 {
     int masterfd,clientfd;
-    int port_master = 4000; int port_client = 4001;
+    int port_master = 4000; int port_client = 5001;
     char *host;
     int sizeClient;
     infos_client clientInfos;
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
    }
 
     Rio_readinitb(&rio,masterfd);
-    if((sizeClient = Rio_readnb(&rio, &clientInfos,sizeof(infos_client)) != 0)){
+    if((sizeClient = rio_readnb(&rio, &clientInfos,sizeof(infos_client)) != 0)){
           printf("Client %s reçu, atttente connexion...\n",clientInfos.client_hostname);
           clientfd = Open_clientfd(clientInfos.client_hostname, port_client);
 
