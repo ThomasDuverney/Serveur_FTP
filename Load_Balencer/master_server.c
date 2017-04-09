@@ -13,6 +13,8 @@ int main(int argc, char **argv)
     int listenfd;
     int port = 4000;
     socklen_t serverlen;
+    pid_t pidFils;
+    fd_set readset;
     //rio_t rio;
 // INFORMATIONS POUR LES CLIENTS
     typedef struct {
@@ -23,7 +25,6 @@ int main(int argc, char **argv)
     }infos_client;
 
     int connfd;
-    infos_client tabClients[NB_CLIENTS];
 
 // INFORMATIONS POUR LES SERVERS ESCLAVES
     typedef struct {
@@ -57,28 +58,50 @@ int main(int argc, char **argv)
     }
     printf("Les servers slaves sont prêts \n");
     printf("En attente de clients... \n");
-// BOUCLE POUR ATTENDRE TOUS LES CLIENTS
-    while (1) {
 
-          while((connfd = Accept(listenfd, (SA *)&(tabClients[i]).clientaddr, &serverlen))<0);
+    int pipeInfos[2];
+    pipe(pipeInfos);
+
+    if ((pidFils = fork()) == 0){
+        close(pipeInfos[0]);
+        // BOUCLE POUR ATTENDRE LES CLIENTS
+        while (1) {
+          infos_client client;
+          while((connfd = Accept(listenfd, (SA *) &client.clientaddr, &serverlen))<0);
           /* determine the name of the server */
-          Getnameinfo((SA *) &(tabClients[i]).clientaddr,serverlen,tabClients[i].client_hostname, MAX_NAME_LEN, 0, 0,0);
-
+          Getnameinfo((SA *) &client.clientaddr,serverlen,client.client_hostname, MAX_NAME_LEN, 0, 0,0);
           /* determine the textual representation of the server's IP address */
-          Inet_ntop(AF_INET, &(tabClients[i]).clientaddr.sin_addr,tabClients[i].client_ip_string,INET_ADDRSTRLEN);
+          Inet_ntop(AF_INET, &client.clientaddr.sin_addr,client.client_ip_string,INET_ADDRSTRLEN);
 
-          printf("Master server connected to client %s (%s)\n", tabClients[i].client_hostname,tabClients[i].client_ip_string);
+          printf("Master server connected to client %s (%s)\n", client.client_hostname,client.client_ip_string);
           Close(connfd);
+          write(pipeInfos[1],&client,sizeof(infos_client));
+        }
+    }else{
+        infos_client tabClients[NB_CLIENTS];
+        int cptClient,j = 0;
+        close(pipeInfos[1]);
+        while(1){
 
-          int j =0;
-          while(j<NB_SERVERS && tabSlaves[j].status!=LIBRE){j++;}
-          if(j<NB_SERVERS){
-            //Rio_readinitb(&rio, tabSlaves[j].connfd);
-            Rio_writen(tabSlaves[j].connfd, &(tabSlaves)[j], sizeof(infos_client));
-            tabSlaves[j].status=OCCUPE;
-            printf("Infos client transmis au server slaves... \n");
+          FD_ZERO(&readset);
+          FD_SET(pipeInfos[0],&readset);
+          if (select(FD_SETSIZE,&readset, NULL, NULL,NULL)>0){
+            if(FD_ISSET(pipeInfos[0],&readset)){
+
+                read(pipeInfos[0],&(tabClients)[cptClient],sizeof(infos_client));
+                cptClient++;
+                j =0;
+                while(j<NB_SERVERS && tabSlaves[j].status!=LIBRE){j++;}
+                if(j<NB_SERVERS){
+                  Rio_writen(tabSlaves[j].connfd, &(tabClients)[j], sizeof(infos_client));
+                  tabSlaves[j].status=OCCUPE;
+                  printf("Infos client transmis au server slaves... \n");
+                }else{
+                  printf("Tout les servers sont occupés\n");
+                }
+            }
           }
-
+        }
     }
     exit(0);
 }

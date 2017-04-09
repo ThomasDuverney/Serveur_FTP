@@ -49,7 +49,7 @@ int main(int argc, char **argv)
           FD_ZERO(&readset);
           FD_SET(clientfd,&readset);
 
-          if (select(FD_SETSIZE,&readset, NULL, NULL,NULL)>0){
+          if (select(clientfd+1,&readset, NULL, NULL,NULL)>0){
             if(FD_ISSET(clientfd,&readset)){
               printf("Server connected to client %s (%s)\n", clientInfos.client_hostname,clientInfos.client_ip_string);
               int connected;

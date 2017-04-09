@@ -29,6 +29,7 @@ int main(int argc, char **argv)
         exit(0);
     }
     host = argv[1];
+    //port_server = atoi(argv[2]);
     masterfd = Open_clientfd(host, port_master);
     close(masterfd);
     // CREATION SOCKET ECOUTE ET ATTENTE DU SERVER SLAVE
@@ -52,8 +53,13 @@ int main(int argc, char **argv)
         write(serverfd, bufName, strlen(bufName));
         FD_ZERO(&readset);
         FD_SET(serverfd,&readset);
+        struct timeval timeout;
 
-        if (select(FD_SETSIZE,&readset, NULL, NULL,NULL)>0){
+        // Temps limite d'attente
+        timeout.tv_sec = 20;
+        timeout.tv_usec = 0;
+
+        if (select(serverfd+1,&readset, NULL, NULL,&timeout)>0){
           if(FD_ISSET(serverfd,&readset)){
             sizeRead = read(serverfd, &sizeFileSend,sizeof(sizeFileSend));
             printf("%lu\n",sizeFileSend);
@@ -62,7 +68,7 @@ int main(int argc, char **argv)
               if((fdin = open("Fichier_recu.jpg",O_WRONLY | O_CREAT | O_TRUNC,0644))>0){
                   time(&start_t);
 
-                  while ((sizeRead = read(serverfd, bufFile, MAXBLOCK)) <= 0 && countFileSize !=sizeFileSend) {
+                  while ((sizeRead = read(serverfd, bufFile, MAXBLOCK)) != 0 && countFileSize !=sizeFileSend) {
                       countFileSize += write(fdin, bufFile,sizeRead);
                   }
                   time(&end_t);

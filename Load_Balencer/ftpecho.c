@@ -39,8 +39,13 @@ void sendFile(int connfd)
 /*----RECUPERE LE FICHIER DEMANDE PAR LE CLIENT----*/
 FD_ZERO(&readset);
 FD_SET(connfd,&readset);
+struct timeval timeout;
 
-if (select(FD_SETSIZE,&readset, NULL, NULL,NULL)>0){
+// Temps limite d'attente
+timeout.tv_sec = 20;
+timeout.tv_usec = 0;
+
+if (select(connfd+1,&readset, NULL, NULL,&timeout)>0){
   if(FD_ISSET(connfd,&readset)){
 
         if ((n = read(connfd, bufName, MAXLINE)) > 0){
@@ -51,10 +56,10 @@ if (select(FD_SETSIZE,&readset, NULL, NULL,NULL)>0){
           printf("Le client demande le fichier : %s\n",file);
 
 /*-------------------------------------------------*/
-          if((fdin = open(file, O_RDONLY, NULL))>0){
+          if((fdin = open("chevreuil.jpg", O_RDONLY, NULL))>0){
                   /*Recupere la taille du fichier */
                   printf("pouet\n");
-                  stat(file, &st);
+                  stat("chevreuil.jpg", &st);
                   size = st.st_size;
                   printf("Le fichier a envoyer à une taille de %lu\n",size);
                   write(connfd,&size, sizeof(size));
@@ -74,10 +79,15 @@ if (select(FD_SETSIZE,&readset, NULL, NULL,NULL)>0){
                   write(connfd,&size, sizeof(size));
           }
           free(file);
+          exit(0);
+          printf("pouet1");
         }
-
+        close(connfd);
+        printf("bite");
       }
+        printf("sexe");
     }
+    printf("Enculé");
     free(bufName);
     free(bufFile);
 
