@@ -4,12 +4,13 @@
 #include "csapp.h"
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #define MAX_NAME_LEN 256
 
 void echo(int connfd)
 {
-    size_t n;
+    ssize_t n;
     char buf[MAXLINE];
     rio_t rio;
 
@@ -27,47 +28,54 @@ void sendFile(int connfd)
 /*-----------------------------------------*/
     char * bufName = malloc(MAXLINE);
     char * bufFile = malloc(MAXLINE);
-    rio_t rios, riof;
     int fdin,clientAlive;
     struct stat st;
-    size_t sizeRead,size,n;
+    ssize_t sizeRead,size, n;
+    fd_set readset;
+    struct timeval timeout;
+    timeout.tv_sec =20;
 /*-----------------------------------------*/
 /*-----------------------------------------*/
-    /* */
-    Rio_readinitb(&rios, connfd);
 
 /*----RECUPERE LE FICHIER DEMANDE PAR LE CLIENT----*/
+FD_ZERO(&readset);
+FD_SET(connfd,&readset);
 
-    n = Rio_readlineb(&rios, bufName, MAXLINE);
-    printf("Le client demande le fichier \n: %s",bufName);
-    char * file = malloc(n);
-    if(file == NULL){ printf("Erreur d'alocation"); exit(0);};
-    strncpy(file,bufName,n-1);
+if (select(FD_SETSIZE,&readset, NULL, NULL,NULL)>0){
+  if(FD_ISSET(connfd,&readset)){
+        if ((n = read(connfd, bufName, MAXLINE)) != 0){
+          printf("La taille %lu\n",n);
+          char * file = malloc(n);
+          if(file == NULL){ printf("Erreur d'alocation\n"); exit(0);};
+          strncpy(file,bufName,n-1);
+          printf("Le client demande le fichier : %s\n",file);
 /*-------------------------------------------------*/
+          if((fdin = open(file, O_RDONLY, NULL))>0){
+                  /*Recupere la taille du fichier */
+                  printf("pouet");
+                  stat(file, &st);
+                  size = st.st_size;
+                  printf("Le fichier a envoyer à une taille de %lu\n",size);
+                  write(connfd,&size, sizeof(size));
+                  clientAlive = 1;
 
-    if((fdin = open(file, O_RDONLY, NULL))>0){
-            /*Recupere la taille du fichier */
-            stat(file, &st);
-            size = st.st_size;
-            printf("Le fichier a envoyer à une taille de %lu\n",size);
-            Rio_writen(connfd,&size, sizeof(size));
+                  while ((sizeRead = read(fdin, bufFile, MAXBLOCK)) !=0  && clientAlive !=0) {
+                      if(read(connfd, bufFile, sizeRead) == -1){
+                          printf("La connexion a un client a été perdu");
+                          clientAlive = 0;
+                      }
+                  }
+                  close(fdin);
+                  printf("Le fichier a été envoyé !");
+          }else{
+                  printf("Le fichier n'existe pas !");
+                  size = -1;
+                  write(connfd,&size, sizeof(size));
+          }
+          free(file);
+        }
 
-            Rio_readinitb(&riof, fdin);
-
-            clientAlive = 1;
-
-            while ((sizeRead = Rio_readnb(&riof, bufFile, MAXBLOCK)) != 0 && clientAlive !=0) {
-                if(rio_writen(connfd, bufFile, sizeRead) == -1){
-                    printf("La connexion a un client a été perdu");
-                    clientAlive = 0;
-                }
-                sleep(0.5);
-            }
-
-            close(fdin);
-    }else{
-            size = 0;
-            Rio_writen(connfd,&size, sizeof(size));
+      }
     }
     free(bufName);
     free(bufFile);

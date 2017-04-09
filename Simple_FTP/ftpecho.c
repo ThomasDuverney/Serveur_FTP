@@ -48,7 +48,7 @@ void sendFile(int connfd)
     strncpy(file,bufName,n-1);
 /*-------------------------------------------------*/
 
-    if((fdin = open(file, O_RDONLY, NULL))>0){
+    if((fdin = open("chevreuil.jpg", O_RDONLY, NULL))>0){
             /*Recupere la taille du fichier */
             stat(file, &st);
             size = st.st_size;

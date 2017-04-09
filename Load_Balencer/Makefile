@@ -19,7 +19,7 @@ INCLUDE = csapp.h
 OBJS = csapp.o ftpecho.o
 INCLDIR = -I.
 
-PROGS = server client master_server slave
+PROGS = client master_server slave
 
 all: $(PROGS)
 

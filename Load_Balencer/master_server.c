@@ -2,7 +2,7 @@
 #include <dirent.h>
 
 #define MAX_NAME_LEN 256
-#define NB_SERVERS 2
+#define NB_SERVERS 1
 #define NB_CLIENTS 5
 #define OCCUPE 1
 #define LIBRE 1
@@ -13,7 +13,7 @@ int main(int argc, char **argv)
     int listenfd;
     int port = 4000;
     socklen_t serverlen;
-    rio_t rio;
+    //rio_t rio;
 // INFORMATIONS POUR LES CLIENTS
     typedef struct {
       struct sockaddr_in clientaddr;
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
           int j =0;
           while(j<NB_SERVERS && tabSlaves[j].status!=LIBRE){j++;}
           if(j<NB_SERVERS){
-            Rio_readinitb(&rio, tabSlaves[j].connfd);
+            //Rio_readinitb(&rio, tabSlaves[j].connfd);
             Rio_writen(tabSlaves[j].connfd, &(tabSlaves)[j], sizeof(infos_client));
             tabSlaves[j].status=OCCUPE;
             printf("Infos client transmis au server slaves... \n");
