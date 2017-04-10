@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 
                 printf("Le fichier a été envoyé avec succes\n");
                 printf("%lu bytes reçus en %f ms\n",countFileSize,diff_t);
-                exit(0);
+                //exit(0);
             }else{
                 printf("Problème ouverture fichier\n");
             }
@@ -65,6 +65,7 @@ int main(int argc, char **argv)
             printf("Le fichier demandé n'existe pas sur le serveur\n");
             exit(0);
         }
+        printf("Rentrer un nom de fichier :\n");
     }
     Close(clientfd);
     exit(0);

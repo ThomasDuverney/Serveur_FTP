@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     int port = 4000;
     socklen_t serverlen;
     pid_t pidFils;
-    fd_set readset;
+    fd_set readset,readServer;
     //rio_t rio;
 // INFORMATIONS POUR LES CLIENTS
     typedef struct {
@@ -80,13 +80,17 @@ int main(int argc, char **argv)
     }else{
         infos_client tabClients[NB_CLIENTS];
         int cptClient,j = 0;
+        struct timeval tv;
+        rio_t rio;
+        infos_client clientInfos;
         close(pipeInfos[1]);
-        while(1){
 
+        while(1){
+            tv.tv_sec = 1;
+            tv.tv_usec = 0;
           FD_ZERO(&readset);
           FD_SET(pipeInfos[0],&readset);
-          if (select(FD_SETSIZE,&readset, NULL, NULL,NULL)>0){
-            if(FD_ISSET(pipeInfos[0],&readset)){
+          if (select(FD_SETSIZE,&readset, NULL, NULL,&tv)>0){
 
                 read(pipeInfos[0],&(tabClients)[cptClient],sizeof(infos_client));
                 cptClient++;
@@ -99,7 +103,23 @@ int main(int argc, char **argv)
                 }else{
                   printf("Tout les servers sont occupés\n");
                 }
-            }
+          }
+          for(int k=0;k<NB_SERVERS;k++){
+              FD_ZERO(&readServer);
+              FD_SET(tabSlaves[j].connfd,&readServer);
+          }
+          tv.tv_sec = 1;
+          tv.tv_usec = 0;
+          printf(" LOL\n");
+          if (select(FD_SETSIZE,&readset, NULL, NULL,&tv)>0){
+              for(int k=0;k<NB_SERVERS;k++){
+                  printf("Youpi\n");
+                  Rio_readinitb(&rio,tabSlaves[j].connfd);
+                  if(rio_readnb(&rio, &clientInfos,sizeof(infos_client)) != 0){
+                      tabSlaves[j].status=LIBRE;
+                      printf("Libération d'un des serveurs\n");
+                  }
+              }
           }
         }
     }

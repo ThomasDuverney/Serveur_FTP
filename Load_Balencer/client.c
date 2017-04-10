@@ -15,14 +15,15 @@ int main(int argc, char **argv)
     char server_ip_string[INET_ADDRSTRLEN];
     char server_hostname[MAX_NAME_LEN];
 
-    char *host, bufName[MAXLINE],bufFile[MAXBLOCK];
-    int fdin;
-    fd_set readset;
+    char *host;
+    char bufName[MAXLINE];
+    char bufFile[MAXBLOCK];
+    int fdin,decremente;
+    size_t maxBlock;
     ssize_t countFileSize = 0;
     ssize_t sizeRead,sizeFileSend;
 
-    time_t start_t, end_t;
-    double diff_t;
+    struct timespec start, stop;
 
     if (argc != 2) {
         fprintf(stderr, "usage: %s <host> <port>\n", argv[0]);
@@ -41,52 +42,48 @@ int main(int argc, char **argv)
     Getnameinfo((SA *) &serveraddr, serverlen,server_hostname, MAX_NAME_LEN, 0, 0, 0);
     Inet_ntop(AF_INET, &serveraddr.sin_addr, server_ip_string,INET_ADDRSTRLEN);
 
-    //ENVOI D'UN OCTET POUR CONFIRMER LA CONNEXION
-    int connected = 1;
-    write(serverfd,&connected, sizeof(connected));
-
     printf("Connecté à mon Serveur FTP\n");
     printf("ftp > get : ");
 
     while (Fgets(bufName, MAXLINE, stdin) != NULL) {
 
-        write(serverfd, bufName, strlen(bufName));
-        FD_ZERO(&readset);
-        FD_SET(serverfd,&readset);
-        struct timeval timeout;
+        char * file = malloc(strlen(bufName));
+        if(file == NULL){ printf("Erreur d'alocation\n"); exit(0);};
+        strncpy(file,bufName,strlen(bufName)-1);
 
-        // Temps limite d'attente
-        timeout.tv_sec = 20;
-        timeout.tv_usec = 0;
+        if(strcmp(file,"bye") != 0){
 
-        if (select(serverfd+1,&readset, NULL, NULL,&timeout)>0){
-          if(FD_ISSET(serverfd,&readset)){
-            sizeRead = read(serverfd, &sizeFileSend,sizeof(sizeFileSend));
-            printf("%lu\n",sizeFileSend);
-            printf("%lu\n",sizeRead);
-            if(sizeRead!= 0 && sizeFileSend !=-1){
+            rio_writen(serverfd,file, strlen(bufName)-1);
+
+            if((sizeRead = rio_readn(serverfd, &sizeFileSend,sizeof(sizeFileSend))) != 0 && sizeFileSend !=-1){
               if((fdin = open("Fichier_recu.jpg",O_WRONLY | O_CREAT | O_TRUNC,0644))>0){
-                  time(&start_t);
 
-                  while ((sizeRead = read(serverfd, bufFile, MAXBLOCK)) != 0 && countFileSize !=sizeFileSend) {
-                      countFileSize += write(fdin, bufFile,sizeRead);
+                  clock_gettime( CLOCK_REALTIME, &start);
+                  countFileSize = 0;
+                  maxBlock = (sizeFileSend >= MAXBLOCK) ? MAXBLOCK : sizeFileSend;
+                  decremente =sizeFileSend;
+
+                  while(countFileSize <sizeFileSend && (sizeRead = rio_readn(serverfd,bufFile,maxBlock)) >0) {
+                      countFileSize += rio_writen(fdin,bufFile,sizeRead);
+                      decremente -=MAXBLOCK;
+                      if(decremente < MAXBLOCK){
+                          maxBlock = decremente;
+                      }
                   }
-                  time(&end_t);
-                  close(fdin);
-                  diff_t = difftime(end_t, start_t);
+                 clock_gettime( CLOCK_REALTIME, &stop);
+                 close(fdin);
+                 double val = (stop.tv_nsec/1000000.0) - (start.tv_nsec/1000000.0);
 
-                  printf("Le fichier a été envoyé avec succes\n");
-                  printf("%lu bytes reçus en %f ms\n",countFileSize,diff_t);
+                 printf("Le fichier a été envoyé avec succes\n");
+                 printf("%lu bytes reçus en %f ms\n",countFileSize,val);
 
-              }else{
-                  printf("Problème ouverture fichier\n");
-              }
-            }else{
-                printf("Le fichier demandé n'existe pas sur le serveur\n");
-            }
-          }
-        }
-        printf("ftp > get : ");
+              }else{ printf("Problème ouverture fichier\n");}
+
+            }else{printf("Le fichier demandé n'existe pas sur le serveur\n");}
+
+            printf("ftp > get : ");
+        }else{printf("Deconnexion \n"); exit(0);}
+        free(file);
     }
     Close(serverfd);
     exit(0);

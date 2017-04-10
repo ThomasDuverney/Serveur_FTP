@@ -22,73 +22,58 @@ void echo(int connfd)
     }
 }
 
-void sendFile(int connfd)
+int sendFile(int connfd)
 {
 /*------INITIALISATION DES VARIABLES--------*/
 /*-----------------------------------------*/
-    char * bufName = malloc(MAXLINE);
-    char * bufFile = malloc(MAXLINE);
+    char bufName[MAXLINE];
+    char bufFile[MAXLINE];
     int fdin,clientAlive;
     struct stat st;
-    ssize_t sizeRead,size, n;
-    fd_set readset;
-
+    ssize_t sizeRead,size, n, maxBlock;
+    size_t sizewrite;
 /*-----------------------------------------*/
 /*-----------------------------------------*/
 
-/*----RECUPERE LE FICHIER DEMANDE PAR LE CLIENT----*/
-FD_ZERO(&readset);
-FD_SET(connfd,&readset);
-struct timeval timeout;
+    if ((n = read(connfd, bufName, MAXLINE)) > 0){
+      if(strcmp(bufName,"bye") != 0){
 
-// Temps limite d'attente
-timeout.tv_sec = 20;
-timeout.tv_usec = 0;
+          printf("Le client demande le fichier : %s\n",bufName);
 
-if (select(connfd+1,&readset, NULL, NULL,&timeout)>0){
-  if(FD_ISSET(connfd,&readset)){
-
-        if ((n = read(connfd, bufName, MAXLINE)) > 0){
-          printf("La taille %lu\n",n);
-          char * file = malloc(n);
-          if(file == NULL){ printf("Erreur d'alocation\n"); exit(0);};
-          strncpy(file,bufName,n-1);
-          printf("Le client demande le fichier : %s\n",file);
-
-/*-------------------------------------------------*/
-          if((fdin = open("chevreuil.jpg", O_RDONLY, NULL))>0){
+          if((fdin = open(bufName, O_RDONLY, NULL))>0){
                   /*Recupere la taille du fichier */
-                  printf("pouet\n");
-                  stat("chevreuil.jpg", &st);
+                  stat(bufName, &st);
                   size = st.st_size;
                   printf("Le fichier a envoyer à une taille de %lu\n",size);
-                  write(connfd,&size, sizeof(size));
-                  clientAlive = 1;
+                  Rio_writen(connfd,&size, sizeof(size));
 
-                  while ((sizeRead = read(fdin, bufFile, MAXBLOCK)) !=0  && clientAlive !=0) {
-                      if(read(connfd, bufFile, sizeRead) == -1){
-                          printf("La connexion a un client a été perdu");
+                  clientAlive = 1;
+                  maxBlock = (size >= MAXBLOCK) ? MAXBLOCK : size;
+
+                  int decremente =size;
+                  while((sizeRead = rio_readn(fdin, bufFile, maxBlock)) !=0  && decremente > 0 && clientAlive !=0) {
+
+                      if((sizewrite = rio_writen(connfd, bufFile, (size_t)sizeRead)) == -1){
+                          printf("La connexion a un client a été perdu\n");
                           clientAlive = 0;
+                          return 0;
+                      }
+                      decremente -=MAXBLOCK;
+                      if(decremente < MAXBLOCK){
+                          maxBlock = decremente;
                       }
                   }
                   close(fdin);
-                  printf("Le fichier a été envoyé !");
+                  printf("Le fichier a été envoyé !\n");
+                  return 1;
           }else{
-                  printf("Le fichier n'existe pas !");
+                  printf("Le fichier n'existe pas !\n");
                   size = -1;
-                  write(connfd,&size, sizeof(size));
+                  Rio_writen(connfd,&size, sizeof(size));
+                  return 1;
           }
-          free(file);
-          exit(0);
-          printf("pouet1");
-        }
-        close(connfd);
-        printf("bite");
-      }
-        printf("sexe");
-    }
-    printf("Enculé");
-    free(bufName);
-    free(bufFile);
 
+      }else{ return 0; }
+
+  }else{ return 0; }
 }

@@ -4,8 +4,12 @@
 #include "csapp.h"
 #include <sys/time.h>
 #define MAX_NAME_LEN 256
+#define CONNECTED 1
+#define DECONNECTED 0
+#define NOCONNEXION 2
 
-void sendFile(int connfd);
+
+int sendFile(int connfd);
 
 // INFORMATIONS POUR LES CLIENTS
     typedef struct {
@@ -23,7 +27,8 @@ int main(int argc, char **argv)
     int sizeClient;
     infos_client clientInfos;
     rio_t rio;
-    fd_set readset;
+
+    int etat = NOCONNEXION;
 
     if (argc != 2) {
         fprintf(stderr, "usage: %s <host>\n", argv[0]);
@@ -31,37 +36,30 @@ int main(int argc, char **argv)
     }
     host = argv[1];
     masterfd = Open_clientfd(host, port_master);
-
-    printf("Connecté au Master server\n");
-    printf("En attente de clients...\n");
-   FD_ZERO(&readset);
-   FD_SET(masterfd, &readset);
-   if (select (FD_SETSIZE, &readset, NULL, NULL, NULL) < 0){
-       perror ("select");
-       exit (EXIT_FAILURE);
-   }
-
     Rio_readinitb(&rio,masterfd);
-    if((sizeClient = rio_readnb(&rio, &clientInfos,sizeof(infos_client)) != 0)){
-          printf("Client %s reçu, atttente connexion...\n",clientInfos.client_hostname);
-          clientfd = Open_clientfd(clientInfos.client_hostname, port_client);
+    printf("Connecté au Master server\n");
+    //printf("En attente de clients...\n");
 
-          FD_ZERO(&readset);
-          FD_SET(clientfd,&readset);
+    while(1){
+        if(etat == NOCONNEXION){
+            printf("En attente de clients...\n");
+            if((sizeClient = rio_readnb(&rio, &clientInfos,sizeof(infos_client))) != 0){
 
-          if (select(clientfd+1,&readset, NULL, NULL,NULL)>0){
-            if(FD_ISSET(clientfd,&readset)){
-              printf("Server connected to client %s (%s)\n", clientInfos.client_hostname,clientInfos.client_ip_string);
-              int connected;
-              read(clientfd,&connected,sizeof(connected));
-              while(1){
-                sendFile(clientfd);
-              }
-
+                  printf("Client %s reçu, attente connexion...\n",clientInfos.client_hostname);
+                  clientfd = Open_clientfd(clientInfos.client_hostname, port_client);
+                  printf("Server connected to client %s (%s)\n", clientInfos.client_hostname,clientInfos.client_ip_string);
+                  etat = sendFile(clientfd);
             }
+        }else if(etat == DECONNECTED){
+                printf("Deconnexion du client...\n");
+                close(clientfd);
+                rio_writen(masterfd,&clientInfos,sizeof(infos_client));
+                etat = NOCONNEXION;
         }else{
-          exit(0);
+            etat = sendFile(clientfd);
+
         }
-}
+
+    }
    exit(0);
 }
