@@ -1,13 +1,4 @@
-/*
- * echo - read and echo text lines until client closes connection
- */
-#include "csapp.h"
-#include <sys/stat.h>
-#include <unistd.h>
-#include <sys/time.h>
-
-#define MAX_NAME_LEN 256
-
+#include "ftpecho.h"
 void echo(int connfd)
 {
     ssize_t n;
@@ -34,7 +25,7 @@ int sendFile(int connfd)
     size_t sizewrite;
 /*-----------------------------------------*/
 /*-----------------------------------------*/
-
+    
     if ((n = read(connfd, bufName, MAXLINE)) > 0){
       if(strcmp(bufName,"bye") != 0){
 

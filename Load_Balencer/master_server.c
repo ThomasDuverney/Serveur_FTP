@@ -1,11 +1,6 @@
 #include "csapp.h"
 #include <dirent.h>
-
-#define MAX_NAME_LEN 256
-#define NB_SERVERS 2
-#define NB_CLIENTS 5
-#define OCCUPE 1
-#define LIBRE 0
+#include "ftpecho.h"
 
 int main(int argc, char **argv)
 {
@@ -14,26 +9,7 @@ int main(int argc, char **argv)
     int port = 4000;
     socklen_t serverlen;
     pid_t pidFils;
-    fd_set readset,readServer;
-    //rio_t rio;
-// INFORMATIONS POUR LES CLIENTS
-    typedef struct {
-      struct sockaddr_in clientaddr;
-      char client_ip_string[INET_ADDRSTRLEN];
-      char client_hostname[MAX_NAME_LEN];
-      int nbOctetsSent;
-    }infos_client;
-
-    int connfd;
-
-// INFORMATIONS POUR LES SERVERS ESCLAVES
-    typedef struct {
-      struct sockaddr_in serveraddr;
-      char server_ip_string[INET_ADDRSTRLEN];
-      char server_hostname[MAX_NAME_LEN];
-      int connfd;
-      int status;
-    }infos_slaves;
+    fd_set readset;
 
     infos_slaves tabSlaves[NB_SERVERS];
 
@@ -80,44 +56,38 @@ int main(int argc, char **argv)
     }else{
         infos_client tabClients[NB_CLIENTS];
         int cptClient,j = 0;
-        struct timeval tv;
-        rio_t rio;
         infos_client clientInfos;
         close(pipeInfos[1]);
 
         while(1){
-            tv.tv_sec = 1;
-            tv.tv_usec = 0;
           FD_ZERO(&readset);
-          FD_SET(pipeInfos[0],&readset);
-          if (select(FD_SETSIZE,&readset, NULL, NULL,&tv)>0){
-
-                read(pipeInfos[0],&(tabClients)[cptClient],sizeof(infos_client));
-                cptClient++;
-                j =0;
-                while(j<NB_SERVERS && tabSlaves[j].status!=LIBRE){j++;}
-                if(j<NB_SERVERS){
-                  Rio_writen(tabSlaves[j].connfd, &(tabClients)[j], sizeof(infos_client));
-                  tabSlaves[j].status=OCCUPE;
-                  printf("Infos client transmis au server slaves... \n");
-                }else{
-                  printf("Tout les servers sont occupés\n");
-                }
-          }
           for(int k=0;k<NB_SERVERS;k++){
-              FD_ZERO(&readServer);
-              FD_SET(tabSlaves[j].connfd,&readServer);
+              FD_SET(tabSlaves[j].connfd,&readset);
           }
-          tv.tv_sec = 1;
-          tv.tv_usec = 0;
-          printf(" LOL\n");
-          if (select(FD_SETSIZE,&readset, NULL, NULL,&tv)>0){
+
+          FD_SET(pipeInfos[0],&readset);
+          if (select(FD_SETSIZE,&readset, NULL, NULL,NULL)>0){
+              if(FD_ISSET(pipeInfos[0],&readset)){
+                  read(pipeInfos[0],&(tabClients)[cptClient],sizeof(infos_client));
+                  j =0;
+                  int tmp = cptClient%NB_SERVERS;
+                  /*while(j<NB_SERVERS && tabSlaves[j].status!=LIBRE){j++;}*/
+                  if(j<NB_SERVERS){
+                    Rio_writen(tabSlaves[tmp].connfd, &(tabClients)[cptClient], sizeof(infos_client));
+                    //tabSlaves[j].status=OCCUPE;
+                    cptClient++;
+                    printf("Infos client transmis au server slaves... \n");
+                  }else{
+                    printf("Tout les servers sont occupés\n");
+                  }
+              }
+
               for(int k=0;k<NB_SERVERS;k++){
-                  printf("Youpi\n");
-                  Rio_readinitb(&rio,tabSlaves[j].connfd);
-                  if(rio_readnb(&rio, &clientInfos,sizeof(infos_client)) != 0){
-                      tabSlaves[j].status=LIBRE;
-                      printf("Libération d'un des serveurs\n");
+                  if(FD_ISSET(tabSlaves[k].connfd,&readset)){
+                      if(rio_readn(tabSlaves[k].connfd, &clientInfos,sizeof(infos_client))!= 0){
+                          tabSlaves[j].status=LIBRE;
+                          printf("Libération d'un des serveurs\n");
+                      }
                   }
               }
           }

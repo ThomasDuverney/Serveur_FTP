@@ -2,8 +2,8 @@
  * echoclient.c - An echo client
  */
 #include "csapp.h"
+#include "ftpecho.h"
 #include <sys/time.h>
-#define MAX_NAME_LEN 256
 
 int main(int argc, char **argv)
 {
@@ -22,6 +22,7 @@ int main(int argc, char **argv)
     size_t maxBlock;
     ssize_t countFileSize = 0;
     ssize_t sizeRead,sizeFileSend;
+    struct stat st;
 
     struct timespec start, stop;
 
@@ -38,7 +39,7 @@ int main(int argc, char **argv)
     listenfd = Open_listenfd(port_server);
     while((serverfd = Accept(listenfd, (SA *)&serveraddr, &serverlen))<0);
 
-    // RECPERATION DES INFORMATIONS SUR LE SERVEUR
+    // RECUPERATION DES INFORMATIONS DU SERVEUR
     Getnameinfo((SA *) &serveraddr, serverlen,server_hostname, MAX_NAME_LEN, 0, 0, 0);
     Inet_ntop(AF_INET, &serveraddr.sin_addr, server_ip_string,INET_ADDRSTRLEN);
 
@@ -52,38 +53,40 @@ int main(int argc, char **argv)
         strncpy(file,bufName,strlen(bufName)-1);
 
         if(strcmp(file,"bye") != 0){
+            //if(stat(bufName, &st)!=-1){
 
-            rio_writen(serverfd,file, strlen(bufName)-1);
+              rio_writen(serverfd,file, strlen(bufName)-1);
 
-            if((sizeRead = rio_readn(serverfd, &sizeFileSend,sizeof(sizeFileSend))) != 0 && sizeFileSend !=-1){
-              if((fdin = open("Fichier_recu.jpg",O_WRONLY | O_CREAT | O_TRUNC,0644))>0){
+              if((sizeRead = rio_readn(serverfd, &sizeFileSend,sizeof(sizeFileSend))) != 0 && sizeFileSend !=-1){
+                if((fdin = open("Fichier_recu.jpg",O_WRONLY | O_CREAT | O_TRUNC,0644))>0){
 
-                  clock_gettime( CLOCK_REALTIME, &start);
-                  countFileSize = 0;
-                  maxBlock = (sizeFileSend >= MAXBLOCK) ? MAXBLOCK : sizeFileSend;
-                  decremente =sizeFileSend;
+                    clock_gettime( CLOCK_REALTIME, &start);
+                    countFileSize = 0;
+                    maxBlock = (sizeFileSend >= MAXBLOCK) ? MAXBLOCK : sizeFileSend;
+                    decremente =sizeFileSend;
 
-                  while(countFileSize <sizeFileSend && (sizeRead = rio_readn(serverfd,bufFile,maxBlock)) >0) {
-                      countFileSize += rio_writen(fdin,bufFile,sizeRead);
-                      decremente -=MAXBLOCK;
-                      if(decremente < MAXBLOCK){
-                          maxBlock = decremente;
-                      }
-                  }
-                 clock_gettime( CLOCK_REALTIME, &stop);
-                 close(fdin);
-                 double val = (stop.tv_nsec/1000000.0) - (start.tv_nsec/1000000.0);
+                    while(countFileSize <sizeFileSend && (sizeRead = rio_readn(serverfd,bufFile,maxBlock)) >0) {
+                        countFileSize += rio_writen(fdin,bufFile,sizeRead);
+                        decremente -=MAXBLOCK;
+                        if(decremente < MAXBLOCK){
+                            maxBlock = decremente;
+                        }
+                    }
+                   clock_gettime( CLOCK_REALTIME, &stop);
+                   close(fdin);
+                   double val = (stop.tv_nsec/1000000.0) - (start.tv_nsec/1000000.0);
 
-                 printf("Le fichier a été envoyé avec succes\n");
-                 printf("%lu bytes reçus en %f ms\n",countFileSize,val);
+                   printf("Le fichier a été envoyé avec succes\n");
+                   printf("%lu bytes reçus en %f ms\n",countFileSize,val);
 
-              }else{ printf("Problème ouverture fichier\n");}
+                }else{ printf("Problème ouverture fichier\n");}
 
-            }else{printf("Le fichier demandé n'existe pas sur le serveur\n");}
+              }else{printf("Le fichier demandé n'existe pas sur le serveur\n");}
+            //}
 
-            printf("ftp > get : ");
         }else{printf("Deconnexion \n"); exit(0);}
         free(file);
+        printf("ftp > get : ");
     }
     Close(serverfd);
     exit(0);

@@ -1,23 +1,10 @@
-/*
- * echoclient.c - An echo client
- */
+#include "ftpecho.h"
 #include "csapp.h"
 #include <sys/time.h>
 #define MAX_NAME_LEN 256
 #define CONNECTED 1
 #define DECONNECTED 0
 #define NOCONNEXION 2
-
-
-int sendFile(int connfd);
-
-// INFORMATIONS POUR LES CLIENTS
-    typedef struct {
-      struct sockaddr_in clientaddr;
-      char client_ip_string[INET_ADDRSTRLEN];
-      char client_hostname[MAX_NAME_LEN];
-      int nbOctetsSent;
-    }infos_client;
 
 int main(int argc, char **argv)
 {
@@ -38,8 +25,11 @@ int main(int argc, char **argv)
     masterfd = Open_clientfd(host, port_master);
     Rio_readinitb(&rio,masterfd);
     printf("Connecté au Master server\n");
-    //printf("En attente de clients...\n");
-
+    int i=0;
+    while(i <NB_CLIENTS && fork() != 0){
+        i++;
+    }
+    
     while(1){
         if(etat == NOCONNEXION){
             printf("En attente de clients...\n");
