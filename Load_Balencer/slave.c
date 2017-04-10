@@ -26,10 +26,10 @@ int main(int argc, char **argv)
     Rio_readinitb(&rio,masterfd);
     printf("Connecté au Master server\n");
     int i=0;
+    // On créer les fils 
     while(i <NB_CLIENTS && fork() != 0){
         i++;
     }
-
     while(1){
         // SI IL N'Y A AUCUNE CONNEXION SUR LE SERVER
         if(etat == NOCONNEXION){
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
                 close(clientfd);
                 rio_writen(masterfd,&clientInfos,sizeof(infos_client));
                 etat = NOCONNEXION;
-        // SI LE CLIENT EST TOUJOURS CONNECTÉ ET QU'IL REDEMANDE UN FICHIER        
+        // SI LE CLIENT EST TOUJOURS CONNECTÉ ET QU'IL REDEMANDE UN FICHIER
         }else{
             etat = sendFile(clientfd);
 

@@ -42,8 +42,9 @@ int sendFile(int connfd)
                   maxBlock = (size >= MAXBLOCK) ? MAXBLOCK : size;
 
                   int decremente =size;
+                  // On lit le fichier et on l'envoi au client dans la foulé
                   while((sizeRead = rio_readn(fdin, bufFile, maxBlock)) !=0  && decremente > 0 && clientAlive !=0) {
-
+                      // Si il y'a une perte de connexion pendant le transfert
                       if((sizewrite = rio_writen(connfd, bufFile, (size_t)sizeRead)) == -1){
                           printf("La connexion a un client a été perdu\n");
                           clientAlive = 0;

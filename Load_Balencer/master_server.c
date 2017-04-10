@@ -61,10 +61,12 @@ int main(int argc, char **argv)
 
         while(1){
           FD_ZERO(&readset);
+          // On me tout les descripteur dans le readset
+          // pour pouvoir l'utiliser avec select plus tard
           for(int k=0;k<NB_SERVERS;k++){
               FD_SET(tabSlaves[j].connfd,&readset);
           }
-
+          // On attend tant qu'il n'y a pas de données dans un des descripteur
           FD_SET(pipeInfos[0],&readset);
           if (select(FD_SETSIZE,&readset, NULL, NULL,NULL)>0){
               if(FD_ISSET(pipeInfos[0],&readset)){
