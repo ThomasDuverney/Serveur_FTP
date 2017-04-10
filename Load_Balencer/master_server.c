@@ -81,7 +81,7 @@ int main(int argc, char **argv)
                     printf("Tout les servers sont occupés\n");
                   }
               }
-
+              // INFORME LA FIN DE COMMUNICATION D'UN SERVER AVEC UN CLIENT
               for(int k=0;k<NB_SERVERS;k++){
                   if(FD_ISSET(tabSlaves[k].connfd,&readset)){
                       if(rio_readn(tabSlaves[k].connfd, &clientInfos,sizeof(infos_client))!= 0){

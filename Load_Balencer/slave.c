@@ -29,8 +29,9 @@ int main(int argc, char **argv)
     while(i <NB_CLIENTS && fork() != 0){
         i++;
     }
-    
+
     while(1){
+        // SI IL N'Y A AUCUNE CONNEXION SUR LE SERVER
         if(etat == NOCONNEXION){
             printf("En attente de clients...\n");
             if((sizeClient = rio_readnb(&rio, &clientInfos,sizeof(infos_client))) != 0){
@@ -40,11 +41,13 @@ int main(int argc, char **argv)
                   printf("Server connected to client %s (%s)\n", clientInfos.client_hostname,clientInfos.client_ip_string);
                   etat = sendFile(clientfd);
             }
+        // SI UN CLIENT SE DECONNECT ON ENVOI UN MESSAGE AU MASTER
         }else if(etat == DECONNECTED){
                 printf("Deconnexion du client...\n");
                 close(clientfd);
                 rio_writen(masterfd,&clientInfos,sizeof(infos_client));
                 etat = NOCONNEXION;
+        // SI LE CLIENT EST TOUJOURS CONNECTÉ ET QU'IL REDEMANDE UN FICHIER        
         }else{
             etat = sendFile(clientfd);
 

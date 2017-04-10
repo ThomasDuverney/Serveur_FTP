@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     size_t maxBlock;
     ssize_t countFileSize = 0;
     ssize_t sizeRead,sizeFileSend;
-    struct stat st;
+    //struct stat st;
 
     struct timespec start, stop;
 
@@ -47,16 +47,16 @@ int main(int argc, char **argv)
     printf("ftp > get : ");
 
     while (Fgets(bufName, MAXLINE, stdin) != NULL) {
-
+        // Enleve le caractère de retour chariot
         char * file = malloc(strlen(bufName));
         if(file == NULL){ printf("Erreur d'alocation\n"); exit(0);};
         strncpy(file,bufName,strlen(bufName)-1);
 
+        // Vérifie si la saisie ne correspont pas à la commande bye
         if(strcmp(file,"bye") != 0){
-            //if(stat(bufName, &st)!=-1){
-
+              // Envoi du nom de fichier
               rio_writen(serverfd,file, strlen(bufName)-1);
-
+              // Recupère la taille du nom de fichier
               if((sizeRead = rio_readn(serverfd, &sizeFileSend,sizeof(sizeFileSend))) != 0 && sizeFileSend !=-1){
                 if((fdin = open("Fichier_recu.jpg",O_WRONLY | O_CREAT | O_TRUNC,0644))>0){
 
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
                     countFileSize = 0;
                     maxBlock = (sizeFileSend >= MAXBLOCK) ? MAXBLOCK : sizeFileSend;
                     decremente =sizeFileSend;
-
+                    // On envoi le fichier par block jusqu'à ce que la taille
                     while(countFileSize <sizeFileSend && (sizeRead = rio_readn(serverfd,bufFile,maxBlock)) >0) {
                         countFileSize += rio_writen(fdin,bufFile,sizeRead);
                         decremente -=MAXBLOCK;
@@ -82,7 +82,6 @@ int main(int argc, char **argv)
                 }else{ printf("Problème ouverture fichier\n");}
 
               }else{printf("Le fichier demandé n'existe pas sur le serveur\n");}
-            //}
 
         }else{printf("Deconnexion \n"); exit(0);}
         free(file);

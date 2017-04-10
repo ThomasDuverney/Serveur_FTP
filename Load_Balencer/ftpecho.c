@@ -25,7 +25,7 @@ int sendFile(int connfd)
     size_t sizewrite;
 /*-----------------------------------------*/
 /*-----------------------------------------*/
-    
+
     if ((n = read(connfd, bufName, MAXLINE)) > 0){
       if(strcmp(bufName,"bye") != 0){
 
@@ -68,3 +68,62 @@ int sendFile(int connfd)
 
   }else{ return 0; }
 }
+/*
+int ls()
+{
+	DIR* currentdir = opendir(".");
+	struct dirent *dir_st;
+	int nbfile = 0;
+
+	while ((dir_st = readdir(currentdir)))
+	{
+	    printf ("%s\n", dir_st->d_name);
+	    nbfile += 1;
+
+	}
+	printf("%i files found.\n", nbfile);
+	else
+	    {
+	        if (errno == 0)
+			{
+	            closedir(currentdir);
+		    	printf("Error : File not found !");
+	            return 1;
+	        }
+			while ((dir_st = readdir(currentdir)) != NULL)
+			{
+		        printf ("[%s]\n", dir_st->d_name);
+		    }
+
+	        closedir(currentdir);
+			printf("Read error");
+			return 2;
+	closedir(currentdir);
+	return 0;
+
+}
+
+int execcmd(char* cmd, int argc, char** argv)
+{
+	switch(cmd)
+	{
+		case "ls" :
+			if (argc != 1)
+			{
+				printf("ls : no argument needed");
+				return 1;
+			}
+			ls();
+
+		case "pwd" :
+			printf("TO BE IMPLEMENTED");
+			break;
+		case "cd" :
+			printf("TO BE IMPLEMENTED");
+			break;
+		default :
+			printf("%s : command not found", cmd);
+			return -1;
+	}
+	return 0;
+}*/
